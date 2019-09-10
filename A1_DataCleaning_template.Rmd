@@ -63,6 +63,7 @@ If you're not in a project in Rstudio, make sure to set your working directory h
 If you created an RStudio project, then your working directory (the directory with your data and code for these assignments) is the project directory.
 
 ```{r}
+library(pacman)
 pacman::p_load(tidyverse,janitor)
 ```
 
@@ -77,7 +78,6 @@ demo <- read.csv("demo_train.csv", header = TRUE)
 token <- read.csv("token_train.csv", header = TRUE)
 
 
-plot(LU)
 
 ```
 
@@ -98,6 +98,14 @@ Tip: look through the chapter on data transformation in R for data science (http
 
 
 ```{r}
+# Exploring data - finding our which variables have the same names 
+
+head(LU)
+head(demo)
+head(token)
+
+demo <- rename(demo, SUBJ = Child.ID)
+demo <- rename(demo, VISIT = Visit)
 
 ```
 
@@ -107,7 +115,9 @@ Tip: The stringr package is what you need. str_extract () will allow you to extr
 
 
 ```{r}
-
+#Removing characters in VISIT in LU and token 
+LU$VISIT <- str_remove_all(LU$VISIT, "[Vvisit.]")
+token$VISIT <- str_remove_all(token$VISIT, "[Vvisit.]")
 
 ```
 
@@ -119,7 +129,7 @@ Tip: You can either have one line of code for each child name that is to be chan
 
 
 ```{r}
-
+demo$SUBJ <- str_remove_all()
 ```
 
 2d. Now that the nitty gritty details of the different data sets are fixed, we want to make a subset of each data set only containig the variables that we wish to use in the final data set.
