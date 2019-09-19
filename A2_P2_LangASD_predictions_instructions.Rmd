@@ -122,7 +122,7 @@ predict_2 <- predict(m2)
 rmse(df_train$CHI_MLU[!is.na(df_train$CHI_MLU)], predict_1)
 rmse(df_train$CHI_MLU[!is.na(df_train$CHI_MLU)], predict_2)
 
-"RMSE the amount of error the model makes when predicting CHI_MLU form known data. Can be compared to the standard deviation sd() to see wether it is big or acceptable" 
+"RMSE the amount of error the model makes when predicting CHI_MLU form known data. Can be compared to the standard deviation sd() to see wether it is big or acceptable." 
 # cvms package does the cross-validation 
 
 
