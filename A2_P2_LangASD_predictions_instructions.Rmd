@@ -1,6 +1,6 @@
 ---
 title: "Assignment 2 - Language Development in ASD - Making predictions"
-author: "Riccardo Fusaroli"
+author: "Stine Fabech Hansson"
 date: "August 9, 2019"
 output: html_document
 ---
@@ -135,6 +135,8 @@ df_test <- subset(df_test, (!is.na(df_test$CHI_MLU)))
 
 predict_test_1 <- predict(m1, df_test)
 predict_test_2 <- predict(m2, df_test)
+predict_test_1
+
 
 rmse(df_test$CHI_MLU, predict_test_1)
 rmse(df_test$CHI_MLU, predict_test_2)
@@ -164,13 +166,121 @@ In this exercise you have to use cross-validation to calculate the predictive er
 
 
 ```{r}
-#- Create the basic model of ChildMLU as a function of Time and Diagnosis (don't forget the random effects!).
+# #- Create the basic model of ChildMLU as a function of Time and Diagnosis (don't forget the random effects!).
+# basic <- lmer(CHI_MLU ~ Visit + Diagnosis + (1+Visit|Child.ID), data = df_train)
+# 
+# 
+# #- Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
+# 
+# folds <- createFolds(df_train$Child.ID, 5)
+# split_up <- lapply(folds, function(ind, dat) dat[ind,], dat = df_train)
+# 
+# fold <- split_up$Fold1
+# 
+# folds_i <- sample(split_up)
+# folds_i
+# 
+# 
+# for (k in 1:5){
+#   test_i <- which(folds_i == k)
+#   train_df <- split_up[-test_i, ]
+#   test_df <- split_up[test_i, ]  
+#   model <- lmer(CHI_MLU ~ Visit + Diagnosis + (1+Visit|Child.ID), data = train_df)
+#   pred <- predict(model, test_df)
+# }
+# 
+#     
+# for (k in 1:n_folds) {
+#     test_i <- which(folds_i == k)
+#     train_xy <- xy[-test_i, ]
+#     test_xy <- xy[test_i, ]
+#     x <- train_xy$x
+#     y <- train_xy$y
+#     fitted_models <- apply(t(df), 2, function(degf) lm(y ~ ns(x, df = degf)))
+#     x <- test_xy$x
+#     y <- test_xy$y
+#     pred <- mapply(function(obj, degf) predict(obj, data.frame(ns(x, df = degf))), 
+#         fitted_models, df)
+#     cv_tmp[k, ] <- sapply(as.list(data.frame(pred)), function(y_hat) mean((y - 
+#         y_hat)^2))  
+# }
 
-#- Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
+########
+set.seed(123)
+
+# Remove NAs
+df_train <- subset(df_train, (!is.na(df_train$CHI_MLU))) 
+
+#We create folds
+folds <- createFolds(unique(df_train$Child.ID), k = 5, list = FALSE) # list = FALSE returns vector instead of list. #unique() to keep only distinct rows.
+
+# We make a loop that assigns a fold to each unique ID
+
+fold_index <- 1 # we create a variable called fold_index
+
+#we loop over each id in the vector of unique ids to get a fold number in a column and make sure that each child get their fold number consistently
+for (id in unique(df_train$Child.ID)){
+  df_train$fold[df_train$Child.ID == id] <- folds[fold_index] # creating the column called fold, which contains the fold number associated with each child id
+  fold_index <- fold_index + 1 
+}
+
+performances <- c() # We create an empty vector for the performances 
+#### loop for running cross validation ####
+for (i in 1:max(df_train$fold)) {  #for each fold of the maximum folds
+  #We create empty train and testing set dataframes for each i
+  train_set <- as.data.frame(df_train[0,])
+  test_set <- as.data.frame(df_train[0,])
+  prediction <- c() # create empty prediction vector
+  fold_index <- as.integer(as.character(i)) # convert i to integer
+  
+  # assign test and training set according to the current folds
+  train_set <- df_train[df_train$fold != fold_index,] #training set without the current foldindex
+  test_set <- df_train[df_train$fold == fold_index,] #test set with only the current fold index
+  
+  # We create our model 
+  m0 <- lmer(data = train_set, CHI_MLU ~ 1 + Visit * Diagnosis + (1 + Visit|Child.ID))
+  
+  # run prediction
+  prediction <- predict(m0, test_set, allow.new.levels = TRUE) # Making predictions with the model and the test set 
+  fold_rmse <- rmse(test_set$CHI_MLU, prediction) # calculate rmse for each fold
+  message(paste("RMSE for fold", fold_index, fold_rmse)) # print RMSE for each fold to console
+  performances[i] <- fold_rmse # register rmse value to 'performances'vector
+}
+
+# calculate mean RMSE and print it
+performances = mean(performances)
+performances
 
 #- Report the results and comment on them. 
 
 #- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
+performances <- c() # We create an empty vector for the performances 
+#### loop for running cross validation ####
+for (i in 1:max(df_train$fold)) {  #for each fold of the maximum folds
+  #We create empty train and testing set dataframes for each i
+  train_set <- as.data.frame(df_train[0,])
+  test_set <- as.data.frame(df_train[0,])
+  prediction <- c() # create empty prediction vector
+  fold_index <- as.integer(as.character(i)) # convert i to integer
+  
+  # assign test and training set according to the current folds
+  train_set <- df_train[df_train$fold != fold_index,] #training set without the current foldindex
+  test_set <- df_train[df_train$fold == fold_index,] #test set with only the current fold index
+  
+  # We create our model 
+  m1 <- lmer(data = train_set, CHI_MLU ~ 1 + Visit * Diagnosis * verbalIQ1 +(1 + Visit|Child.ID), REML =F, lmerControl(optCtrl=list(xtol_abs=1e-8, ftol_abs=1e-8)))
+  
+  # run prediction
+  prediction <- predict(m1, test_set, allow.new.levels = TRUE) # Making predictions with the model and the test set 
+  fold_rmse <- rmse(test_set$CHI_MLU, prediction) # calculate rmse for each fold
+  message(paste("RMSE for fold", fold_index, fold_rmse)) # print RMSE for each fold to console
+  performances[i] <- fold_rmse # register rmse value to 'performances'vector
+}
+
+# calculate mean RMSE and print it
+performances = mean(performances)
+performances
+
 
 # Bonus Question 1: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
 # Bonus Question 2: compare the cross-validated predictive error against the actual predictive error on the test data
@@ -191,7 +301,23 @@ You want to evaluate:
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
 ```{r}
+#We subset the data for Bernie - he has child.id 2
+bernie <- subset(df_test, Child.ID==2)
+td <- subset(df_train, Diagnosis == "TD")
 
+# The development over time
+diff_1 <- abs(bernie$CHI_MLU[1]-mean(td$CHI_MLU[1]))
+diff_2 <- abs(bernie$CHI_MLU[2]-mean(td$CHI_MLU[2]))
+diff_3 <- abs(bernie$CHI_MLU[3]-mean(td$CHI_MLU[3]))
+diff_4 <- abs(bernie$CHI_MLU[4]-mean(td$CHI_MLU[4]))
+diff_5 <- abs(bernie$CHI_MLU[5]-mean(td$CHI_MLU[5]))
+diff_6 <- abs(bernie$CHI_MLU[6]-mean(td$CHI_MLU[6]))
+
+
+predict(m1, bernie)
+
+bernie$CHI_MLU[6]-3.887794
+#Bernie is below expectations 
 ```
 
 
