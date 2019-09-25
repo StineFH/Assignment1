@@ -183,6 +183,7 @@ for (id in unique(df_train$Child.ID)){
   fold_k <- fold_k + 1
 }
   
+performances <- c() # We create an empty vector for the performances
 #### loop for running cross validation ####
 for (k in 1:max(df_train$fold)){ 
   fold_k <- as.integer(as.character(k)) # Convert k to integer 
@@ -200,84 +201,12 @@ for (k in 1:max(df_train$fold)){
 #Calculate the rmse for each fold 
   rmse <- rmse(test_df$CHI_MLU, prediction)
   message(paste("RMSE for fold", fold_k, rmse)) # print RMSE for each fold to console
+  performances[k] <- rmse # register rmse value to 'performances'vector
 }
 
-
-# ########
-# set.seed(123)
-# 
-# # Remove NAs
-# df_train <- subset(df_train, (!is.na(df_train$CHI_MLU)))
-# 
-# #We create folds
-# folds <- createFolds(unique(df_train$Child.ID), k = 5, list = FALSE) # list = FALSE returns vector instead of list. #unique() to keep only distinct rows.
-# 
-# # We make a loop that assigns a fold to each unique ID
-# 
-# fold_index <- 1 # we create a variable called fold_index
-# 
-# #we loop over each id in the vector of unique ids to get a fold number in a column and make sure that each child get their fold number consistently
-# for (id in unique(df_train$Child.ID)){
-#   df_train$fold[df_train$Child.ID == id] <- folds[fold_index] # creating the column called fold, which contains the fold number associated with each child id
-#   fold_index <- fold_index + 1
-# }
-# 
-# performances <- c() # We create an empty vector for the performances
-# #### loop for running cross validation ####
-# for (i in 1:max(df_train$fold)) {  #for each fold of the maximum folds
-#   #We create empty train and testing set dataframes for each i
-#   train_set <- as.data.frame(df_train[0,])
-#   test_set <- as.data.frame(df_train[0,])
-#   prediction <- c() # create empty prediction vector
-#   fold_index <- as.integer(as.character(i)) # convert i to integer
-# 
-#   # assign test and training set according to the current folds
-#   train_set <- df_train[df_train$fold != fold_index,] #training set without the current foldindex
-#   test_set <- df_train[df_train$fold == fold_index,] #test set with only the current fold index
-# 
-#   # We create our model
-#   m0 <- lmer(data = train_set, CHI_MLU ~ 1 + Visit * Diagnosis + (1 + Visit|Child.ID))
-# 
-#   # run prediction
-#   prediction <- predict(m0, test_set, allow.new.levels = TRUE) # Making predictions with the model and the test set
-#   fold_rmse <- rmse(test_set$CHI_MLU, prediction) # calculate rmse for each fold
-#   message(paste("RMSE for fold", fold_index, fold_rmse)) # print RMSE for each fold to console
-#   performances[i] <- fold_rmse # register rmse value to 'performances'vector
-# }
-# 
-# # calculate mean RMSE and print it
-# performances = mean(performances)
-# performances
-
-# #- Report the results and comment on them. 
-# 
-# #- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
-# performances <- c() # We create an empty vector for the performances 
-# #### loop for running cross validation ####
-# for (i in 1:max(df_train$fold)) {  #for each fold of the maximum folds
-#   #We create empty train and testing set dataframes for each i
-#   train_set <- as.data.frame(df_train[0,])
-#   test_set <- as.data.frame(df_train[0,])
-#   prediction <- c() # create empty prediction vector
-#   fold_index <- as.integer(as.character(i)) # convert i to integer
-#   
-#   # assign test and training set according to the current folds
-#   train_set <- df_train[df_train$fold != fold_index,] #training set without the current foldindex
-#   test_set <- df_train[df_train$fold == fold_index,] #test set with only the current fold index
-#   
-#   # We create our model 
-#   m1 <- lmer(data = train_set, CHI_MLU ~ 1 + Visit * Diagnosis * verbalIQ1 +(1 + Visit|Child.ID), REML =F, lmerControl(optCtrl=list(xtol_abs=1e-8, ftol_abs=1e-8)))
-#   
-#   # run prediction
-#   prediction <- predict(m1, test_set, allow.new.levels = TRUE) # Making predictions with the model and the test set 
-#   fold_rmse <- rmse(test_set$CHI_MLU, prediction) # calculate rmse for each fold
-#   message(paste("RMSE for fold", fold_index, fold_rmse)) # print RMSE for each fold to console
-#   performances[i] <- fold_rmse # register rmse value to 'performances'vector
-# }
-# 
-# # calculate mean RMSE and print it
-# performances = mean(performances)
-# performances
+# calculate mean RMSE and print it
+performances = mean(performances)
+performances
 
 
 # Bonus Question 1: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
