@@ -288,9 +288,9 @@ bernie$CHI_MLU[6]-pred_asd[[6]]
 m3 <- lmer(CHI_MLU ~ Visit*verbalIQ1 + (1 + Visit|Child.ID), data = td, REML =F, lmerControl(optCtrl=list(xtol_abs=1e-8, ftol_abs=1e-8)))
 
 #Comparing Bernie to other TD children 
-pred_td <- predict(m3, bernie)
+pred_td <- predict(m3, bernie, allow.new.levels = T)
 pred_td
-bernie$CHI_MLU[6]-pred[[6]]
+bernie$CHI_MLU[6]-pred_td[[6]]
 #Bernie is below expectations 
 ```
 
