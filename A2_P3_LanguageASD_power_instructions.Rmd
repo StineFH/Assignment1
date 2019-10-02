@@ -60,39 +60,12 @@ df <- df[complete.cases(df[,c("CHI_MLU", "Diagnosis", "verbalIQ1", "Child.ID")])
          
 df$Child.ID <- as.factor(df$Child.ID)
 
-
-# # Power simulation simple model
-# 
-# m1 <- lmer(CHI_MLU ~ Visit + (1+Visit|Child.ID), df, REML=F, control = lmerControl(optimizer="nloptwrap", calc.derivs=FALSE))
-# 
-# fixef(m1)["Visit"] <- 0.8
-# 
-# sim_1 <- powerSim(m1, test=fixed("Visit"), nsim=20, seed = 1)
-# sim_1
-# 
-# #Power sim with interaction Visit and VerbalIQ1
-# 
-# m2 <- lmer(CHI_MLU ~ Visit*verbalIQ1 + (1+Visit|Child.ID), df, REML=F, control = lmerControl(optimizer="nloptwrap", calc.derivs=FALSE))
-# 
-# 
-# fixef(m2)["Visit"] <- 0.8
-# fixef(m2)["verbalIQ1"] <- 0.8
-# 
-# sim_2 <- powerSim(m2, test=fixed("Visit:verbalIQ1"), nsim=20, seed = 1)
-# sim_2
-# #Power sim with Diagnosis
-# 
-# m3 <- lmer(CHI_MLU ~ Visit*Diagnosis + (1+Visit|Child.ID), df, REML=F, control = lmerControl(optimizer="nloptwrap", calc.derivs=FALSE))
-# 
-# fixef(m3)["Diagnosis"] <- 0.8
-# 
-# sim_3 = powerSim(m3, fixed("Diagnosis"), nsim = 50, seed = 1, progress = F)
-# sim_3
-
-# Power sim of 3-way interaction between Visit, Diagnosis and VerbalIQ1
+# Power sim of 2-way interaction between Visit, Diagnosis
 int2_model <- lmer(CHI_MLU ~ Visit*Diagnosis + (1+Visit|Child.ID), df, REML=F, control = lmerControl(optimizer="nloptwrap", calc.derivs=FALSE))
 
-fixef(int2_model)["Visit:DiagnosisTD"] <- 0.8
+#Checking the effect size
+fixef(int2_model)["Visit:DiagnosisTD"] 
+
 
 sim_int2 = powerSim(int2_model, fixed("Visit:Diagnosis"), nsim = 50, seed = 1, progress = F)
 
@@ -118,36 +91,22 @@ How would you perform a more conservative power analysis?
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
 ```{r}
-
 #Identify and justify a minimum effect size for each of your relevant effects
-fixef(int2_model)["Visit:DiagnosisTD"] <- 0.1
-fixef(int2_model)["Visit"] <- 0.1
-fixef(int2_model)["DiagnosisTD"] <- 0.1
 
-int2_model <- extend(int2_model, along = "Child.ID", n = 200) #extend data along child ID
+## for performing a more conservative analysis we set the effect size to 0.1
+
+fixef(int2_model)["Visit:DiagnosisTD"] <- 0.1
 
 # Minimum sample size required for sufficient power using the new effect size Diagnosis
-p <- powerCurve(int2_model, fixed("DiagnosisTD"), along = "Child.ID", nsim = 10, breaks = seq(from = 10, to = 200, by = 5), seed = 1, progress = F)
+sim_cons <- powerSim(int2_model, fixed("Visit:Diagnosis"), nsim = 50, seed = 1, progress = F)
+sim_cons
 
-print(p)
-plot(p)
+conservative <- powerCurve(int2_model, fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 10, seed = 1, progress = F)
 
-# Minimum sample size required for sufficient power using the new effect size Visit 
-p2 <- powerCurve(int2_model, fixed("Visit"), along = "Child.ID", nsim = 10, breaks = seq(from = 10, to = 200, by = 5), seed = 1, progress = F)
+print(conservative)
+plot(conservative)
 
-print(p2)
-plot(p2)
 
-#The power simulation for the interaction 
-sim_int = powerSim(int2_model, fixed("Visit:Diagnosis"), nsim = 50, seed = 1, progress = F)
-
-sim_int
-
-# Minimum sample size required for sufficient power using the new effect size 
-p3 <- powerCurve(int2_model, fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 10, seed = 1, progress = F)
-
-print(p3)
-plot(p3)
 ```
 
 
@@ -157,8 +116,8 @@ Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). 
 
 ```{r}
 # Minimum sample size required for sufficient power using the new effect size 
-p3 <- powerCurve(int2_model, fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 10, breaks = seq(from = 5, to = 30, by = 5), seed = 1, progress = F)
+collect30 <- powerCurve(int2_model, fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 10, breaks = seq(from = 5, to = 30, by = 5), seed = 1, progress = F)
 
-print(p3)
-plot(p3)
+print(collect30)
+plot(collect30)
 ```
