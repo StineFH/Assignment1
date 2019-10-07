@@ -2,7 +2,9 @@
 title: "Assignment 2 - Language Development in ASD - Power and simulations"
 author: "Stine Fabech Hansson"
 date: "26-09-2019"
-output: html_document
+output: 
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r setup, include=FALSE}
@@ -115,9 +117,28 @@ plot(conservative)
 Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why
 
 ```{r}
-# Minimum sample size required for sufficient power using the new effect size 
-collect30 <- powerCurve(int2_model, fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 10, breaks = seq(from = 5, to = 30, by = 5), seed = 1, progress = F)
+#We subset to two different dataframes
+TD<-subset(df,Diagnosis=="TD")
+ASD<-subset(df,Diagnosis=="ASD")
 
-print(collect30)
-plot(collect30)
+#we sample the TD data by uniqie child id
+TD_try<-sample(unique(TD$Child.ID), 15) 
+
+#ONly takes the sample participants
+TD_new<-TD[TD$Child.ID %in% TD_try, ]
+
+#Same with ASD
+ASD_try<-sample(unique(ASD$Child.ID), 15) 
+
+ASD_new<-ASD[ASD$Child.ID %in% ASD_try, ]
+
+#We merge them together
+merged<-merge(TD_new,ASD_new,all=TRUE)
+
+model_m <- lmer(CHI_MLU ~ Visit * Diagnosis + (1+Visit|Child.ID),
+              merged, REML = F,
+              control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE)) #optimizer
+
+fixef(model_m)["Visit:DiagnosisTD"] <- 0.1 # let's try setting a fixed ef
+powerSim(model_m , fixed("Visit:Diagnosis"), nsim = 200, seed = 1, progress = F)
 ```
